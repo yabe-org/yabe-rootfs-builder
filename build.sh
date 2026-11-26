@@ -107,7 +107,7 @@ install_aur_packages() {
   local yay_install=""
   mapfile -t pkgs < <(read_list "${profile}/packages.aur")
   if (( ${#pkgs[@]} > 0 )); then
-    yay_install="sudo -u ${aur_user} -H yay -S --needed --noconfirm --removemake \\
+    yay_install="sudo -u ${aur_user} -i yay -S --needed --noconfirm --removemake \\
   --answerclean None --answerdiff None --answeredit None -- ${pkgs[*]}"
   fi
 
