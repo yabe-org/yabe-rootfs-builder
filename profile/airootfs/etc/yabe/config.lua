@@ -15,7 +15,12 @@ yabe.keybind({ "Ctrl", "Alt", "Return" }, yabe.dispatchers.exec("wezterm"))
 yabe.keybind({ "Ctrl", "Alt", "E" }, yabe.dispatchers.exec("thunar"))
 yabe.keybind({ "Ctrl", "Alt", "D" }, yabe.dispatchers.exec("wofi --show drun"))
 yabe.keybind({ "Ctrl", "Alt", "C" }, yabe.dispatchers.recenter())
+yabe.keybind({ "Ctrl", "Alt", "R" }, yabe.dispatchers.reset_ray())
 
 for i = 0, 9 do
   yabe.keybind({ "Ctrl", "Alt", tostring(i) }, yabe.dispatchers.set_workspace(i))
 end
+
+yabe.on.startup(function()
+  yabe.dispatch(yabe.dispatchers.exec("waybar"))
+end)
