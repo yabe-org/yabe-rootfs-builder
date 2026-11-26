@@ -75,6 +75,8 @@ copy_airootfs() {
   install -d -m 0755 -o 0 -g 0 -- "${root}"
   [[ -d "${profile}/airootfs" ]] || return 0
   cp -af --no-preserve=ownership,mode -- "${profile}/airootfs/." "${root}"
+  # .gitkeep only lets git track otherwise empty directories
+  find "${root}" -xdev -type f -name .gitkeep -delete
   for filename in "${!file_permissions[@]}"; do
     IFS=':' read -ra permissions <<<"${file_permissions["${filename}"]}"
     if [[ "$(realpath -q -- "${root}${filename}")" != "${root}"* ]]; then
