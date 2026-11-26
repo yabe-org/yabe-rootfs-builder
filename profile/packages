@@ -11,8 +11,10 @@ gtk4
 less
 libxkbcommon
 libxkbcommon-x11
+lua-language-server
 man-db
 meson
+neovim
 noto-fonts-cjk
 openssh
 python
