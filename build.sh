@@ -107,7 +107,10 @@ install_aur_packages() {
   local yay_install=""
   mapfile -t pkgs < <(read_list "${profile}/packages.aur")
   if (( ${#pkgs[@]} > 0 )); then
-    yay_install="sudo -u ${aur_user} -i yay -S --needed --noconfirm --removemake \\
+    # --ask 4 (ALPM_QUESTION_CONFLICT_PKG) makes --noconfirm answer yes to removing
+    # installed packages that conflict with the AUR packages (e.g. replacing
+    # base-devel's fakeroot); yay forwards it to the pacman -U it runs.
+    yay_install="sudo -u ${aur_user} -i yay -S --needed --noconfirm --ask 4 --removemake \\
   --answerclean None --answerdiff None --answeredit None -- ${pkgs[*]}"
   fi
 
