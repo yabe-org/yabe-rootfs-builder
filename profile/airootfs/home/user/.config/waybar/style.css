@@ -1,0 +1,17 @@
+window#waybar {
+  background-color: transparent;
+  color: #111;
+}
+
+#clock, #workspaces {
+  margin: 0 8px;
+  background-color: #fff;
+}
+#clock {
+  font-size: 64px;
+  font-weight: bold;
+}
+#workspaces {
+  font-size: 36px;
+}
+

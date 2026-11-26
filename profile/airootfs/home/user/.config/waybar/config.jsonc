@@ -1,0 +1,19 @@
+{
+  "margin-top": 16,
+  "margin-left": 12,
+  "modules-left": [ "group/main" ],
+  "group/main": {
+    "orientation": "vertical",
+    "modules": [
+      "clock",
+      "ext/workspaces",
+    ],
+  },
+  "clock": {
+    "timezone": "UTC",
+  },
+  "ext/workspaces": {
+    "format": "Workspace {name}",
+    "active-only": true,
+  },
+}
