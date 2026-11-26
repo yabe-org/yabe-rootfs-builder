@@ -18,6 +18,7 @@ openssh
 python
 python-gobject
 qt6-base
+tmux
 vim
 wget
 xkeyboard-config
