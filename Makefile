@@ -29,7 +29,10 @@ QEMU_ARGS := \
 
 KERNEL_CMDLINE := root=/dev/vda rw rootfstype=ext4 console=ttyAMA0
 MOUNT_HOST     := mkdir -p /mnt/host && mount -t 9p -o trans=virtio,version=9p2000.L,msize=1048576 host /mnt/host
+# systemd.show_status=error hides the progress messages such as "A start job is running for ..."
+# (printed while build.sh runs) so that the console shows only the build.sh log and errors
 BUILD_CMDLINE  := $(KERNEL_CMDLINE) \
+	systemd.show_status=error \
 	systemd.run=\"/bin/sh -c '$(MOUNT_HOST) && exec /mnt/host/build.sh'\" \
 	systemd.run_success_action=poweroff \
 	systemd.run_failure_action=poweroff \
