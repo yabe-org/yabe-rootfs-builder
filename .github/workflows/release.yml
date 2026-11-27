@@ -1,0 +1,96 @@
+name: Build and release
+
+# Builds the rootfs and publishes it as an immutable release tagged with the
+# UTC date on which the run started (YYYY-MM-DD). If that tag or release
+# already exists, -2, -3, ... is appended (YYYY-MM-DD-2).
+#
+# "Enable release immutability" must be turned on in the repository settings;
+# the job fails after publishing if the release is not immutable.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Determine release tag
+        id: tag
+        run: |
+          date="$(date -u +%F)"
+          tag="$date"
+          n=1
+          # Drafts have no tag yet, so both tags and releases are checked
+          while git ls-remote --exit-code --tags origin "refs/tags/$tag" > /dev/null \
+            || gh release view "$tag" > /dev/null 2>&1; do
+            n=$((n + 1))
+            tag="$date-$n"
+          done
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+      # `make` needs e2fsprogs >= 1.47.1, which Ubuntu 24.04 does not ship,
+      # so it runs in an Arch Linux container. /mnt has far more free space than /.
+      - name: Build rootfs
+        run: |
+          sudo mkdir -p /mnt/rootfs
+          sudo chown "$(id -u):$(id -g)" /mnt/rootfs
+          cp -a "$GITHUB_WORKSPACE" /mnt/rootfs/rootfs-builder
+          docker run --rm \
+            -v /mnt/rootfs/rootfs-builder:/work -w /work \
+            archlinux:latest \
+            bash -euo pipefail -c '
+              pacman -Syu --noconfirm --needed make qemu-system-aarch64 e2fsprogs curl
+              make VM_CPUS="$(nproc)" VM_MEM=12G
+            '
+          ls -lh /mnt/rootfs/rootfs-builder/out
+      - name: Show build log on failure
+        if: failure()
+        run: tail -n 200 /mnt/rootfs/rootfs-builder/out/build.log || true
+      - name: Collect release assets
+        run: |
+          mkdir -p dist
+          cp /mnt/rootfs/rootfs-builder/out/*.tar.zst /mnt/rootfs/rootfs-builder/out/build.log dist/
+          (cd dist && sha256sum -- *.tar.zst > SHA256SUMS)
+          cat dist/SHA256SUMS
+      - uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: dist/*.tar.zst
+      - name: Write release notes
+        run: |
+          {
+            echo "Built from ${GITHUB_SHA}"
+            echo
+            echo "## SHA-256"
+            echo
+            echo '```'
+            cat dist/SHA256SUMS
+            echo '```'
+          } > "$RUNNER_TEMP/notes.md"
+      # Immutability applies on publish, so upload every asset to a draft first.
+      - name: Create release
+        env:
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          gh release create "$TAG" --draft --target "$GITHUB_SHA" --title "$TAG" \
+            --notes-file "$RUNNER_TEMP/notes.md" dist/*
+          gh release edit "$TAG" --draft=false
+          immutable="$(gh api "repos/$GH_REPO/releases/tags/$TAG" --jq .immutable)"
+          if [ "$immutable" != true ]; then
+            echo "::error::Release $TAG is not immutable; enable release immutability in the repository settings"
+            exit 1
+          fi

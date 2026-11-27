@@ -38,6 +38,12 @@ PKGBUILDs that do not list `aarch64` are built anyway (yay's default with `--noc
 | `VM_MEM`    | `3G`    | VM memory                |
 | `MIRROR`    | (empty) | Mirror used only while building, e.g. `http://tw2.mirror.archlinuxarm.org`. The image keeps `profile/airootfs/etc/pacman.d/mirrorlist` |
 
+## Release
+
+`.github/workflows/release.yml` (run manually with `workflow_dispatch`) builds the rootfs on GitHub Actions and publishes it as an immutable release named after the UTC date the run started (`YYYY-MM-DD`); if that name is already taken, `-2`, `-3`, ... is appended (`YYYY-MM-DD-2`).
+The release contains the archive, `SHA256SUMS`, and `build.log`, and the archive has a build provenance attestation.
+"Enable release immutability" must be turned on in the repository settings.
+
 ## Debugging
 
 `make shell` boots the same VM without running `build.sh` (login: `root` / `root`).
